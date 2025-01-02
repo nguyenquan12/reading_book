@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "953138772111",
+    "project_id": "reading-apps-76bbc",
+    "storage_bucket": "reading-apps-76bbc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953138772111:android:7b5e8b210e5bccbe1e58fa",
+        "android_client_info": {
+          "package_name": "com.example.book_sale_apps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkGWP3N3WNPUUAQAyGaRLPxlGWFr6Aacs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
