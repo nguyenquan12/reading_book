@@ -44,38 +44,36 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               AppBar(
                 backgroundColor: Colors.transparent,
-                title: Row(
-                  children: [
-                    // avatar
-                    FutureBuilder(
-                      future: userFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(child: Text("Lỗi: ${snapshot.error}"));
-                        } else if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(
-                              child: Text("Không có dữ liệu người dùng."));
-                        } else {
-                          var data = snapshot.data!;
-                          return CircleAvatar(
+                title: FutureBuilder(
+                  future: userFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text("Lỗi: ${snapshot.error}"));
+                    } else if (!snapshot.hasData || snapshot.data == null) {
+                      return Center(
+                          child: Text("Không có dữ liệu người dùng."));
+                    } else {
+                      var data = snapshot.data!;
+                      return Row(
+                        children: [
+                          CircleAvatar(
                             backgroundImage: NetworkImage("${data.image}"),
-                          );
-                        }
-                      },
-                    ),
-                    // User Name
-                    SizedBox(width: 10),
-                    Text(
-                      'User Name',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                          ),
+                          // User Name
+                          SizedBox(width: 10),
+                          Text(
+                            '${data.firstName}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
                 actions: [
                   Padding(
@@ -131,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         // Looking For
                         SizedBox(height: 10),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -582,56 +579,44 @@ class _MyDrawerState extends State<MyDrawer> {
       child: ListView(
         children: [
           SizedBox(height: 10),
-          //Avatar
+          // Avatar
           Container(
-            width: 70,
-            height: 70,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               image: DecorationImage(
-                image: NetworkImage(
-                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMSn3EtoWPXjceO6MfdgRO27wcAo0BuY5RkA&s"),
+                image: AssetImage("assets/images/logo_app.png"),
               ),
             ),
           ),
           SizedBox(height: 10),
-          //NQ Commerce
+          // Nguyễn Quân
           Center(
             child: Text(
               "Nguyễn Quân",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 25,
+                color: Colors.white,
               ),
             ),
           ),
           //indent: 0
           const Divider(
-            color: Colors.black,
-            thickness: 0.2,
+            color: Colors.white,
+            thickness: 0.4,
           ),
           //Home
-          ListTile(
-            leading: Icon(Icons.home),
-            title: const Text("Home"),
-            onTap: () {},
-          ),
+          listTileWidget(Icons.home, "Home"),
           //Product List
-          ListTile(
-            leading: const Icon(Icons.shopify_outlined),
-            title: const Text("Product List"),
-            onTap: () {},
-          ),
+          listTileWidget(Icons.shopify, "Product List"),
           //Notifications
-          ListTile(
-            leading: Icon(Icons.notifications),
-            title: const Text("Notifications"),
-            onTap: () {},
-          ),
+          listTileWidget(Icons.notifications, "Notifications"),
           //indent: 40
           const Divider(
-            color: Colors.black,
-            thickness: 0.2,
+            color: Colors.white,
+            thickness: 0.4,
             indent: 40,
           ),
           //PRODUCT LIST
@@ -639,6 +624,10 @@ class _MyDrawerState extends State<MyDrawer> {
             padding: EdgeInsets.all(20.0),
             child: Text(
               "PRODUCT LIST",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           FutureBuilder(
@@ -649,34 +638,40 @@ class _MyDrawerState extends State<MyDrawer> {
               } else {
                 var data = snapshot.data!;
 
-                return Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Column(
-                    children:
-                        data.map((e) => ProductDrawer(context, e)).toList(),
-                  ),
+                return Column(
+                  children: data.map((e) => ProductDrawer(context, e)).toList(),
                 );
               }
             },
           ),
           const Divider(
-            color: Colors.black,
+            color: Colors.white,
             height: 20,
             thickness: 0.2,
             indent: 40,
           ),
           //Setting
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text("Setting"),
-          ),
+          listTileWidget(Icons.settings, "Setting"),
           //Help
-          ListTile(
-            leading: Icon(Icons.help_outline_rounded),
-            title: Text("Help"),
-          ),
+          listTileWidget(Icons.help_outline_rounded, 'Help'),
         ],
       ),
+    );
+  }
+
+  Widget listTileWidget(IconData icon, String title) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: Colors.white,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: Colors.white,
+        ),
+      ),
+      onTap: () {},
     );
   }
 
@@ -694,31 +689,48 @@ class _MyDrawerState extends State<MyDrawer> {
           ),
         );
       },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            margin: const EdgeInsets.fromLTRB(0, 10, 10, 15),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image: DecorationImage(
-                image:
-                    NetworkImage('${book.volumeInfo?.imageLinks?.thumbnail}'),
-                fit: BoxFit.cover,
+      child: Container(
+        color: Colors.blueAccent,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    margin: const EdgeInsets.fromLTRB(0, 10, 10, 15),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: NetworkImage(
+                            '${book.volumeInfo?.imageLinks?.thumbnail}'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 1 / 2.1,
+                    child: Text(
+                      '${book.volumeInfo?.title}',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 1 / 2.1,
-            child: Text(
-              '${book.volumeInfo?.imageLinks?.thumbnail}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            const Divider(
+              color: Colors.white,
+              thickness: 0.5,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
