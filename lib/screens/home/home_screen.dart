@@ -1,9 +1,10 @@
 import 'package:book_sale_apps/data/api/book_api.dart';
-import 'package:book_sale_apps/data/api/user_api.dart';
+import 'package:book_sale_apps/data/controller/book_controller.dart';
+import 'package:book_sale_apps/data/controller/user_controller.dart';
 import 'package:book_sale_apps/data/models/book_model.dart';
-import 'package:book_sale_apps/data/models/user_model.dart';
 import 'package:book_sale_apps/screens/home/book_reading_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,80 +14,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<UserModel> userFuture;
-  late Future<List<BookModel>> lstBook;
-
-  @override
-  void initState() {
-    super.initState();
-    userFuture = UserApi.getuser();
-    lstBook = BookApi.getBook();
-  }
+  final UserController userController = Get.put(UserController());
+  final BookController bookController = Get.put(BookController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: MyDrawer(),
       body: Container(
-        // Background
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue,
-              Colors.purple,
-            ],
+            colors: [Colors.blue, Colors.purple],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              AppBar(
-                backgroundColor: Colors.transparent,
-                title: FutureBuilder(
-                  future: userFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text("Lỗi: ${snapshot.error}"));
-                    } else if (!snapshot.hasData || snapshot.data == null) {
-                      return Center(
-                          child: Text("Không có dữ liệu người dùng."));
-                    } else {
-                      var data = snapshot.data!;
-                      return Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: NetworkImage("${data.image}"),
-                          ),
-                          // User Name
-                          SizedBox(width: 10),
-                          Text(
-                            '${data.firstName}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                  },
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              // SingleChildScrollView
+              _buildAppBar(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
@@ -94,111 +40,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Thanh tìm kiếm
-                        TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: IconButton(
-                              icon: const Icon(
-                                Icons.keyboard_voice,
-                                color: Colors.black,
-                              ),
-                              onPressed: () {
-                                // Thêm hành động khi nhấn vào icon
-                              },
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[300],
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: Colors
-                                    .grey, // Màu viền khi không được focus
-                                width: 1.0,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: Colors.blue, // Màu viền khi được focus
-                                width: 2.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Looking For
+                        _buildSearchBar(),
                         SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Looking For',
-                              style: TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold),
-                            ),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'More',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildSectionHeader('Looking For',
+                            onMorePressed: () {}),
                         SizedBox(height: 10),
-                        FutureBuilder(
-                          future: lstBook,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            } else if (snapshot.hasError) {
-                              return Center(child: Text("${snapshot.error}"));
-                            } else if (!snapshot.hasData ||
-                                snapshot.data == null) {
-                              return Center(child: Text("Không có dữ liệu."));
-                            } else {
-                              // Lấy 5 phần tử đầu tiên
-                              var limitedBooks =
-                                  snapshot.data!.take(5).toList();
-
-                              return Row(
-                                children: limitedBooks
-                                    .map((e) => CategoryCard(e))
-                                    .toList(),
-                              );
-                            }
-                          },
-                        ),
+                        _buildCategoryCards(),
                         SizedBox(height: 20),
-                        // Popular
-                        Text(
-                          'Popular',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        // Popular ListBookCard()
+                        _buildSectionHeader('Popular'),
                         SizedBox(height: 10),
-                        SizedBox(
-                          height: 200,
-                          child: ListBookCard(),
-                        ),
+                        _buildPopularBooks(),
                         SizedBox(height: 20),
-                        // List of Books BookList()
-                        Text(
-                          'List of Books',
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: BookList(),
-                        )
+                        _buildSectionHeader('List of Books'),
+                        SizedBox(height: 10),
+                        _buildBookList(),
                       ],
                     ),
                   ),
@@ -211,7 +66,89 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget CategoryCard(BookModel book) {
+  Widget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      title: Obx(() {
+        if (userController.isLoading.value) {
+          return Center(child: CircularProgressIndicator());
+        } else if (userController.user.value == null) {
+          return Center(child: Text("Không có dữ liệu người dùng."));
+        } else {
+          var user = userController.user.value!;
+          return Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(user.image ?? ''),
+              ),
+              SizedBox(width: 10),
+              Text(
+                user.firstName ?? '',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          );
+        }
+      }),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return TextField(
+      decoration: InputDecoration(
+        hintText: 'Search',
+        prefixIcon: Icon(Icons.search),
+        suffixIcon: IconButton(
+          icon: Icon(Icons.keyboard_voice, color: Colors.black),
+          onPressed: () {},
+        ),
+        filled: true,
+        fillColor: Colors.grey[300],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey, width: 1.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.blue, width: 2.0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {VoidCallback? onMorePressed}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        if (onMorePressed != null)
+          TextButton(
+            onPressed: onMorePressed,
+            child: Text('More', style: TextStyle(color: Colors.white)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryCards() {
+    return Obx(() {
+      var limitedBooks = bookController.books.take(5).toList();
+      return Row(
+        children: limitedBooks.map((book) => _buildCategoryCard(book)).toList(),
+      );
+    });
+  }
+
+  Widget _buildCategoryCard(BookModel book) {
     return Expanded(
       flex: 1,
       child: Column(
@@ -219,13 +156,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             height: 50,
             width: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(6), // Bo góc ảnh
+              borderRadius: BorderRadius.circular(6),
               child: Image.network(
-                '${book.volumeInfo?.imageLinks?.thumbnail}',
+                book.volumeInfo?.imageLinks?.thumbnail ?? '',
                 width: 50,
                 height: 50,
                 fit: BoxFit.cover,
@@ -234,13 +169,27 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            '${book.volumeInfo?.title}',
+            book.volumeInfo?.title ?? '',
             style: TextStyle(fontSize: 14),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPopularBooks() {
+    return SizedBox(
+      height: 200,
+      child: ListBookCard(),
+    );
+  }
+
+  Widget _buildBookList() {
+    return SizedBox(
+      width: double.infinity,
+      child: BookList(),
     );
   }
 }
@@ -253,154 +202,157 @@ class ListBookCard extends StatefulWidget {
 }
 
 class _ListBookCardState extends State<ListBookCard> {
-  late Future<List<BookModel>> lstBook;
-  @override
-  void initState() {
-    super.initState();
-    lstBook = BookApi.getBook();
-  }
+  final BookController bookController = Get.put(BookController());
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: lstBook,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text("${snapshot.error}"));
-        } else if (!snapshot.hasData || snapshot.data == null) {
-          return Center(child: Text("Không có dữ liệu."));
-        } else {
-          var data = snapshot.data!;
-          return ListView(
-            scrollDirection: Axis.horizontal,
-            children: data.map((e) => BookCard(e)).toList(),
-          );
-        }
-      },
-    );
+    return Obx(() {
+      if (bookController.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (bookController.books.isEmpty) {
+        return const Center(child: Text("Không có dữ liệu."));
+      } else {
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: bookController.books.length,
+          itemBuilder: (context, index) {
+            return _buildBookCard(bookController.books[index]);
+          },
+        );
+      }
+    });
   }
 
-  Widget BookCard(BookModel book) {
+  Widget _buildBookCard(BookModel book) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Card(
-        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 6,
         child: Container(
-          width: 300,
-          padding: EdgeInsets.all(16),
+          width: 280,
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[800],
-            borderRadius: BorderRadius.circular(8),
+            gradient: const LinearGradient(
+              colors: [
+                Colors.deepPurple,
+                Colors.blueGrey,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  SizedBox(
-                    height: 50,
-                    width: 50,
-                    child: CircleAvatar(
-                      backgroundImage: NetworkImage(
-                        '${book.volumeInfo?.imageLinks?.thumbnail}',
-                      ),
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: NetworkImage(
+                      book.volumeInfo?.imageLinks?.thumbnail ?? '',
+                    ),
+                    backgroundColor: Colors.grey[200],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          book.volumeInfo?.title ?? 'Unknown Title',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          book.volumeInfo?.publishedDate ?? 'Unknown Date',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: Text(
+                  book.volumeInfo?.description ?? 'No description available.',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 18),
+                      const SizedBox(width: 4),
                       Text(
-                        '${book.volumeInfo?.title}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        (book.volumeInfo?.averageRating?.toStringAsFixed(1) ??
+                            'N/A'),
+                        style: const TextStyle(
+                          fontSize: 14,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width / 2.4,
-                        child: Text(
-                          '${book.volumeInfo?.publishedDate}',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.white,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 8),
+                      Text(
+                        '(${book.volumeInfo?.ratingsCount ?? 0})',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 8),
-                    Text(
-                      '${book.volumeInfo?.description}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.star, color: Colors.amber, size: 16),
-                            SizedBox(width: 4),
-                            Text(
-                              '${book.volumeInfo?.averageRating}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              '(${book.volumeInfo?.ratingsCount})',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookReadingScreen(
-                                  chapterTitle: '${book.volumeInfo?.title}',
-                                  chapterContent:
-                                      '${book.volumeInfo?.description}',
-                                  image:
-                                      '${book.volumeInfo?.imageLinks?.thumbnail}',
-                                ),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Read',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookReadingScreen(
+                            chapterTitle:
+                                book.volumeInfo?.title ?? 'Unknown Title',
+                            chapterContent: book.volumeInfo?.description ??
+                                'No content available.',
+                            image: book.volumeInfo?.imageLinks?.thumbnail ?? '',
                           ),
                         ),
-                      ],
+                      );
+                    },
+                    child: const Text(
+                      'Read',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -418,123 +370,78 @@ class BookList extends StatefulWidget {
 }
 
 class _BookListState extends State<BookList> {
-  late Future<List<BookModel>> lstBook;
+  late Future<List<BookModel>> bookList;
 
   @override
   void initState() {
     super.initState();
-    lstBook = BookApi.getBook();
+    bookList =
+        BookApi.getBook(); // Fetch book data when the widget is initialized
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: lstBook,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Lỗi: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text("Không có dữ liệu người dùng."));
-          } else {
-            var data = snapshot.data!;
-            return Column(
-              children: data.map((e) => BookCard(e)).toList(),
-            );
-          }
-        });
+    return FutureBuilder<List<BookModel>>(
+      future: bookList,
+      builder: (context, snapshot) {
+        // Handle different states of the FutureBuilder
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text("No book data available."));
+        } else {
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              return _buildBookCard(snapshot.data![index]);
+            },
+          );
+        }
+      },
+    );
   }
 
-  Widget BookCard(BookModel book) {
+  Widget _buildBookCard(BookModel book) {
     return Padding(
-      padding: const EdgeInsets.only(top: 5, bottom: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Card(
-        elevation: 5,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[700],
-            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.teal, Colors.orange], // Updated gradient colors
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              SizedBox(
-                height: 100,
-                width: 80,
-                child:
-                    Image.network('${book.volumeInfo?.imageLinks?.thumbnail}'),
-              ),
-              SizedBox(width: 10),
+              // Display book image with error handling
+              _buildBookImage(book),
+
+              const SizedBox(width: 16),
+
+              // Display book details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${book.volumeInfo?.title}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      '${book.volumeInfo?.publishedDate}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      '${book.volumeInfo?.description}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black54,
-                          ),
-                          onPressed: () {},
-                          child: Text(
-                            'Download',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookReadingScreen(
-                                  chapterTitle: '${book.volumeInfo?.title}',
-                                  chapterContent:
-                                      '${book.volumeInfo?.description}',
-                                  image:
-                                      '${book.volumeInfo?.imageLinks?.thumbnail}',
-                                ),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Read',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
+                    _buildBookTitle(book),
+                    const SizedBox(height: 4),
+                    _buildBookDate(book),
+                    const SizedBox(height: 8),
+                    _buildBookDescription(book),
+                    const SizedBox(height: 12),
+                    _buildActionButtons(book),
                   ],
                 ),
               ),
@@ -542,6 +449,111 @@ class _BookListState extends State<BookList> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBookImage(BookModel book) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        book.volumeInfo?.imageLinks?.thumbnail ?? '',
+        height: 120,
+        width: 90,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 120,
+            width: 90,
+            color: Colors.grey[700],
+            child: const Icon(
+              Icons.broken_image,
+              color: Colors.white,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBookTitle(BookModel book) {
+    return Text(
+      book.volumeInfo?.title ?? 'Unknown Title',
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 2,
+    );
+  }
+
+  Widget _buildBookDate(BookModel book) {
+    return Text(
+      book.volumeInfo?.publishedDate ?? 'Unknown Date',
+      style: const TextStyle(
+        fontSize: 14,
+        color: Colors.grey,
+      ),
+    );
+  }
+
+  Widget _buildBookDescription(BookModel book) {
+    return Text(
+      book.volumeInfo?.description ?? 'No description available.',
+      style: const TextStyle(
+        fontSize: 14,
+        color: Colors.white,
+      ),
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildActionButtons(BookModel book) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueGrey,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: () {
+            // Download action
+          },
+          child: const Text(
+            'Download',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookReadingScreen(
+                  chapterTitle: book.volumeInfo?.title ?? 'Unknown Title',
+                  chapterContent:
+                      book.volumeInfo?.description ?? 'No content available.',
+                  image: book.volumeInfo?.imageLinks?.thumbnail ?? '',
+                ),
+              ),
+            );
+          },
+          child: const Text(
+            'Read',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -554,13 +566,7 @@ class MyDrawer extends StatefulWidget {
 }
 
 class _MyDrawerState extends State<MyDrawer> {
-  late Future<List<BookModel>> lstBook;
-
-  @override
-  void initState() {
-    super.initState();
-    lstBook = BookApi.getBook();
-  }
+  final BookController bookController = Get.put(BookController());
 
   @override
   Widget build(BuildContext context) {
@@ -630,16 +636,16 @@ class _MyDrawerState extends State<MyDrawer> {
               ),
             ),
           ),
-          FutureBuilder(
-            future: lstBook,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container();
+          Obx(
+            () {
+              if (bookController.isLoading.value) {
+                return Center(child: CircularProgressIndicator());
+              } else if (bookController.books.isEmpty) {
+                return Center(child: Text("Không có dữ liệu."));
               } else {
-                var data = snapshot.data!;
-
+                var book = bookController.books.toList();
                 return Column(
-                  children: data.map((e) => ProductDrawer(context, e)).toList(),
+                  children: book.map((e) => ProductDrawer(context, e)).toList(),
                 );
               }
             },

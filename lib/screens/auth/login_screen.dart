@@ -17,14 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscure = true;
 
-  late Future<LoginModel?> loginFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    loginFuture = Future.value(null); // Khởi tạo giá trị ban đầu
-  }
-
   Future<void> _login() async {
     final username = emailController.text.trim();
     final password = passwordController.text.trim();

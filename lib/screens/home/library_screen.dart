@@ -1,9 +1,9 @@
-import 'package:book_sale_apps/data/api/book_api.dart';
-import 'package:book_sale_apps/data/api/user_api.dart';
+import 'package:book_sale_apps/data/controller/book_controller.dart';
+import 'package:book_sale_apps/data/controller/user_controller.dart';
 import 'package:book_sale_apps/data/models/book_model.dart';
-import 'package:book_sale_apps/data/models/user_model.dart';
 import 'package:book_sale_apps/screens/home/book_reading_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -13,15 +13,8 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  late Future<UserModel> userFuture;
-  late Future<List<BookModel>> lstBook;
-
-  @override
-  void initState() {
-    super.initState();
-    userFuture = UserApi.getuser();
-    lstBook = BookApi.getBook();
-  }
+  final UserController userController = Get.put(UserController());
+  final BookController bookController = Get.put(BookController());
 
   @override
   Widget build(BuildContext context) {
@@ -37,25 +30,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
         // avatar
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: FutureBuilder(
-              future: userFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Obx(() {
+                if (userController.isLoading.value) {
                   return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text("Lỗi: ${snapshot.error}"));
-                } else if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: Text("Không có dữ liệu người dùng."));
+                } else if (userController.user.value == null) {
+                  return Center(
+                    child: Text("Không có dữ liệu người dùng."),
+                  );
                 } else {
-                  var data = snapshot.data!;
+                  var user = userController.user.value!;
                   return CircleAvatar(
-                    backgroundImage: NetworkImage("${data.image}"),
+                    backgroundImage: NetworkImage("${user.image}"),
                   );
                 }
-              },
-            ),
-          ),
+              })),
         ],
       ),
       body: Container(
@@ -86,23 +75,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
               SizedBox(height: 16),
               // Book List
               Expanded(
-                child: FutureBuilder(
-                  future: lstBook,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text("${snapshot.error}"));
-                    } else if (!snapshot.hasData || snapshot.data == null) {
-                      return Center(child: Text("Không có dữ liệu."));
-                    } else {
-                      var data = snapshot.data!;
-                      return ListView(
-                        children: data.map((e) => BookItem(e)).toList(),
-                      );
-                    }
-                  },
-                ),
+                child: Obx(() {
+                  if (bookController.isLoading.value) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (bookController.books.isEmpty) {
+                    return Center(
+                      child: Text("Không có dữ liệu."),
+                    );
+                  } else {
+                    var book = bookController.books..toList();
+                    return ListView(
+                      children: book.map((e) => BookItem(e)).toList(),
+                    );
+                  }
+                }),
               ),
             ],
           ),

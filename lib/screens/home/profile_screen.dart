@@ -1,6 +1,7 @@
-import 'package:book_sale_apps/data/api/user_api.dart';
-import 'package:book_sale_apps/data/models/user_model.dart';
+import 'package:book_sale_apps/data/controller/user_controller.dart';
+import 'package:book_sale_apps/screens/auth/login_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -10,13 +11,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late Future<UserModel> user;
-
-  @override
-  void initState() {
-    super.initState();
-    user = UserApi.getuser(); // Khởi tạo giá trị ban đầu
-  }
+  final UserController userController = Get.put(UserController());
 
   @override
   Widget build(BuildContext context) {
@@ -45,17 +40,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-        child: FutureBuilder(
-          future: user,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        child: Obx(
+          () {
+            if (userController.isLoading.value) {
               return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text("Lỗi: ${snapshot.error}"));
-            } else if (!snapshot.hasData || snapshot.data == null) {
-              return Center(child: Text("Không có dữ liệu người dùng."));
+            } else if (userController.user.value == null) {
+              return Center(
+                child: Text("Không có dữ liệu người dùng."),
+              );
             } else {
-              var data = snapshot.data!;
+              var user = userController.user.value!;
               return SingleChildScrollView(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -66,14 +60,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Image.network(
                         width: MediaQuery.of(context).size.width * 1 / 4,
                         height: MediaQuery.of(context).size.width * 1 / 4,
-                        data.image ?? "",
+                        user.image ?? "",
                         fit: BoxFit.cover,
                       ),
                     ),
                     SizedBox(height: 16),
                     // Name
                     Text(
-                      data.firstName ?? "ABC",
+                      user.firstName ?? "ABC",
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -83,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: 8),
                     // Email
                     Text(
-                      data.email ?? " ",
+                      user.email ?? " ",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white,
@@ -129,7 +123,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: Text('Đăng xuất'),
                             trailing: Icon(Icons.arrow_forward_ios),
                             onTap: () {
-                              // Handle logout functionality
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LoginScreen(),
+                                ),
+                              );
                             },
                           ),
                         ],
