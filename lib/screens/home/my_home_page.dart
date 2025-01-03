@@ -13,18 +13,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    HomeScreen(),
-    LibraryScreen(),
-    ProfileScreen(),
+  final List<Widget Function()> _pages = [
+    () => HomeScreen(),
+    () => LibraryScreen(),
+    () => ProfileScreen(),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: _pages[_currentIndex](),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         backgroundColor: Colors.purple,

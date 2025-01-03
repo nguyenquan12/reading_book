@@ -1,10 +1,10 @@
-import 'package:book_sale_apps/data/api/book_api.dart';
 import 'package:book_sale_apps/data/controller/book_controller.dart';
 import 'package:book_sale_apps/data/controller/user_controller.dart';
 import 'package:book_sale_apps/data/models/book_model.dart';
 import 'package:book_sale_apps/screens/home/book_reading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,7 +58,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(
+                    duration: GetNumUtils(2).seconds,
+                  )
+                  .moveY(
+                    begin: 50,
+                    end: 0,
+                    duration: GetNumUtils(2).seconds,
+                  ), // Hiệu ứng moveY (di chuyển lên)
             ],
           ),
         ),
@@ -128,12 +137,22 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         if (onMorePressed != null)
           TextButton(
             onPressed: onMorePressed,
-            child: Text('More', style: TextStyle(color: Colors.white)),
+            child: Text(
+              'More',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
       ],
     );
@@ -144,8 +163,21 @@ class _HomeScreenState extends State<HomeScreen> {
       var limitedBooks = bookController.books.take(5).toList();
       return Row(
         children: limitedBooks.map((book) => _buildCategoryCard(book)).toList(),
-      );
-    });
+      ).animate().fadeIn(duration: GetNumUtils(2).seconds).moveX(
+            begin: 50,
+            end: 0,
+            duration: GetNumUtils(2).seconds,
+          );
+    })
+        .animate()
+        .fadeIn(
+          duration: GetNumUtils(2).seconds,
+        )
+        .moveX(
+          begin: 50,
+          end: 0,
+          duration: GetNumUtils(2).seconds,
+        );
   }
 
   Widget _buildCategoryCard(BookModel book) {
@@ -237,7 +269,7 @@ class _ListBookCardState extends State<ListBookCard> {
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [
-                Colors.deepPurple,
+                Color.fromARGB(255, 74, 42, 129),
                 Colors.blueGrey,
               ],
               begin: Alignment.topLeft,
@@ -370,39 +402,27 @@ class BookList extends StatefulWidget {
 }
 
 class _BookListState extends State<BookList> {
-  late Future<List<BookModel>> bookList;
-
-  @override
-  void initState() {
-    super.initState();
-    bookList =
-        BookApi.getBook(); // Fetch book data when the widget is initialized
-  }
+  final BookController bookController = Get.put(BookController());
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<BookModel>>(
-      future: bookList,
-      builder: (context, snapshot) {
-        // Handle different states of the FutureBuilder
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No book data available."));
-        } else {
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              return _buildBookCard(snapshot.data![index]);
-            },
-          );
-        }
-      },
-    );
+    return Obx(() {
+      if (bookController.isLoading.value) {
+        return Center(child: CircularProgressIndicator());
+      } else if (bookController.books.isEmpty) {
+        return Center(child: Text("Không có dữ liệu người dùng."));
+      } else {
+        var book = bookController.books.toList();
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: book.length,
+          itemBuilder: (context, index) {
+            return _buildBookCard(book[index]);
+          },
+        );
+      }
+    });
   }
 
   Widget _buildBookCard(BookModel book) {
@@ -417,9 +437,12 @@ class _BookListState extends State<BookList> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.teal, Colors.orange], // Updated gradient colors
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(255, 74, 42, 129),
+                Colors.blueGrey,
+              ], // Updated gradient colors
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -516,7 +539,7 @@ class _BookListState extends State<BookList> {
       children: [
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueGrey,
+            backgroundColor: Colors.black45,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -526,7 +549,10 @@ class _BookListState extends State<BookList> {
           },
           child: const Text(
             'Download',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         ElevatedButton(
@@ -550,7 +576,10 @@ class _BookListState extends State<BookList> {
           },
           child: const Text(
             'Read',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
           ),
         ),
       ],
@@ -650,12 +679,7 @@ class _MyDrawerState extends State<MyDrawer> {
               }
             },
           ),
-          const Divider(
-            color: Colors.white,
-            height: 20,
-            thickness: 0.2,
-            indent: 40,
-          ),
+          SizedBox(height: 10),
           //Setting
           listTileWidget(Icons.settings, "Setting"),
           //Help
@@ -696,7 +720,16 @@ class _MyDrawerState extends State<MyDrawer> {
         );
       },
       child: Container(
-        color: Colors.blueAccent,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Colors.blue,
+              Colors.purple,
+            ], // Updated gradient colors
+          ),
+        ),
         child: Column(
           children: [
             Padding(
@@ -732,6 +765,7 @@ class _MyDrawerState extends State<MyDrawer> {
               ),
             ),
             const Divider(
+              height: 2,
               color: Colors.white,
               thickness: 0.5,
             ),

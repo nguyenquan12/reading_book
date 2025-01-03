@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class BookReadingScreen extends StatefulWidget {
   final String chapterTitle;
@@ -84,7 +85,16 @@ class _BookReadingScreenState extends State<BookReadingScreen> {
             ),
           ],
         ),
-      ),
+      )
+          .animate()
+          .fadeIn(
+            duration: 2.seconds,
+          )
+          .moveY(
+            begin: 50,
+            end: 0,
+            duration: 2.seconds,
+          ),
       bottomNavigationBar: Container(
         color: Colors.purple,
         child: Padding(
